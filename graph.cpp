@@ -472,14 +472,23 @@ vector<string> chunks = get_string_chunks(shingle, chunk_length);
 
   start = chrono::steady_clock::now(); // start sketch update
   // update the projection vectors
-  for (auto& chunk : incoming_chunks) {
-    for (uint32_t i = 0; i < L; i++) {
-      // decayed_delta = projection[i]; //前の射影を記憶
+  // for (auto& chunk : incoming_chunks) {
+  //   for (uint32_t i = 0; i < L; i++) {
+  //     // decayed_delta = projection[i]; //前の射影を記憶
+  //     int delta = hashmulti(chunk, H[i]);
+  //     // projection[i] *= DECAYED_RATE;  //減衰させる
+  //     // projection[i] += delta;
+  //     // decayed_delta = projection[i] - decayed_delta; //前の射影との差を記憶
+  //     // projection_delta[i] += decayed_delta;
+  //     projection_delta[i] += delta;
+  //   }
+  // }
+
+  for (uint32_t i = 0; i < L; i++) {
+    projection[i] *= DECAYED_RATE;
+    for (auto& chunk : incoming_chunks) {
       int delta = hashmulti(chunk, H[i]);
-      // projection[i] *= DECAYED_RATE;  //減衰させる
-      // projection[i] += delta;
-      // decayed_delta = projection[i] - decayed_delta; //前の射影との差を記憶
-      // projection_delta[i] += decayed_delta;
+      projection[i] += delta;
       projection_delta[i] += delta;
     }
   }
@@ -494,28 +503,15 @@ vector<string> chunks = get_string_chunks(shingle, chunk_length);
   // }
 
   if(outgoing_chunks.size()!=0){
-    // if(last_chunk_length==2){
-      for (uint32_t i = 0; i < L; i++) {
-        decayed_delta=projection[i];
-        int delta = 0;
-        for(int j=0;j < outgoing_chunks.size(); j++){
-          delta += hashmulti(outgoing_chunks[j], H[i]);
-        }
-        plojection_delta[i] -= pow(DECAYED_RATE, (cache.size()-1)-ut)*delta;
-        projection_delta[i] += projection[i]*(decayed_delta - 1 );
-        projection[i] += projection_delta[i];
+    for (uint32_t i = 0; i < L; i++) {
+      // decayed_delta=projection[i];
+      int delta = 0;
+      for(int j=0;j < outgoing_chunks.size(); j++){
+        delta += hashmulti(outgoing_chunks[j], H[i]);
       }
-    // }else{
-      // for (uint32_t i = 0; i < L; i++) {
-      //   int delta = 0;
-      //   for(int j=0;j < outgoing_chunks.size()-1; j++){
-      //     delta += hashmulti(outgoing_chunks[j], H[i]);
-      //   }
-      //   projection[i] += (1-pow(DECAYED_RATE, (cache.size()-1)-ut))*delta;
-      //   projection[i] -= hashmulti(outgoing_chunks[outgoing_chunks.size()-1], H[i])
-      //   *pow(DECAYED_RATE, (cache.size()-1)-ut);
-      // }
-    // }
+      projection_delta[i] -= delta * pow(DECAYED_RATE, (cache.size()-1)-ut);
+      projection[i] -= delta * pow(DECAYED_RATE, (cache.size()-1)-ut);
+    }
   }
 
   // update sketch = sign(projection)

@@ -148,17 +148,17 @@ namespace std {
     if (n_outgoing_edges > 1) { // this is not the first edge
       if (last_chunk_length == 1) {
         outgoing_chunks=chunks;//自作
-        outgoing_chunks.pop_back();
-        outgoing_chunks.pop_back();
+        outgoing_chunks.pop_back();//自作
+        outgoing_chunks.pop_back();//自作
         outgoing_chunks.push_back(sec_last_chunk.substr(0,
                                                         sec_last_chunk.length() - 1));
       } else if (last_chunk_length == 2) {
         // do nothing, only incoming chunk is the last chunk
         outgoing_chunks=chunks;//自作
-        outgoing_chunks.pop_back();
+        outgoing_chunks.pop_back();//自作
       } else { // 2 < last_chunk_length <= chunk_length, last chunk had 2 chars added
         outgoing_chunks=chunks;//自作
-        outgoing_chunks.pop_back();
+        outgoing_chunks.pop_back();//自作
         outgoing_chunks.push_back(last_chunk.substr(0, last_chunk_length - 2));
       }
       //ここから自作
