@@ -485,11 +485,12 @@ vector<string> chunks = get_string_chunks(shingle, chunk_length);
   // }
 
   for (uint32_t i = 0; i < L; i++) {
+    projection_delta[i] = projection[i];
     projection[i] *= DECAYED_RATE;
     for (auto& chunk : incoming_chunks) {
       int delta = hashmulti(chunk, H[i]);
       projection[i] += delta;
-      projection_delta[i] += delta;
+      // projection_delta[i] += delta;
     }
   }
 
@@ -503,16 +504,29 @@ vector<string> chunks = get_string_chunks(shingle, chunk_length);
   // }
 
   if(outgoing_chunks.size()!=0){
+    cout << "cache size:" << cache.size() << endl;
+    cout << "ut:" << ut << endl;
     for (uint32_t i = 0; i < L; i++) {
       // decayed_delta=projection[i];
-      int delta = 0;
+      double delta = 0;
       for(int j=0;j < outgoing_chunks.size(); j++){
         delta += hashmulti(outgoing_chunks[j], H[i]);
       }
-      projection_delta[i] -= delta * pow(DECAYED_RATE, (cache.size()-1)-ut);
+      // projection_delta[i] -= delta * pow(DECAYED_RATE, (cache.size()-1)-ut);
+      // cout << delta <<" " << pow(DECAYED_RATE, (cache.size()-1)-ut) << " "
+      // <<delta * pow(DECAYED_RATE, (cache.size()-1)-ut) << " " <<
+      // projection[i] << " ";
       projection[i] -= delta * pow(DECAYED_RATE, (cache.size()-1)-ut);
+      // cout << projection[i] << " ";
     }
+    // cout << endl;
   }
+  // cout << "projection:" << endl;
+  for(uint32_t i = 0; i < L; i++){
+    projection_delta[i] = projection[i] - projection_delta[i];
+    // cout << projection_delta[i] << " ";
+  }
+  // cout << endl;
 
   // update sketch = sign(projection)
   for (uint32_t i = 0; i < L; i++) {

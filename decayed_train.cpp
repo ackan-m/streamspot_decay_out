@@ -142,7 +142,8 @@ namespace std {
     vector<string> incoming_chunks; // to be hashed and added
     vector<string> outgoing_chunks; // to be hashed and subtracted
 
-    incoming_chunks.push_back(last_chunk);
+    // incoming_chunks.push_back(last_chunk);
+    incoming_chunks = chunks;
 
     int ut = -1;
     if (n_outgoing_edges > 1) { // this is not the first edge
@@ -218,17 +219,26 @@ namespace std {
     // start = chrono::steady_clock::now(); // start sketch update
 
     // update the projection vectors
-    for (auto& chunk : incoming_chunks) {
-      for (uint32_t i = 0; i < L; i++) {
-        // decayed_delta = projection[i];
-        // cout << decayed_delta << " ";
+    // for (auto& chunk : incoming_chunks) {
+    //   for (uint32_t i = 0; i < L; i++) {
+    //     // decayed_delta = projection[i];
+    //     // cout << decayed_delta << " ";
+    //     int delta = hashmulti(chunk, H[i]);
+    //     projection[i] *= DECAYED_RATE;  //減衰させる
+    //     projection[i] += delta;
+    //     // cout << projection[i] << " " ;
+    //     // decayed_delta = projection[i] - decayed_delta;
+    //     // cout << decayed_delta << endl;
+    //     // projection_delta[i] += decayed_delta;
+    //   }
+    // }
+
+    for (uint32_t i = 0; i < L; i++) {
+      projection[i] *= DECAYED_RATE;
+      for (auto& chunk : incoming_chunks) {
         int delta = hashmulti(chunk, H[i]);
-        projection[i] *= DECAYED_RATE;  //減衰させる
         projection[i] += delta;
-        // cout << projection[i] << " " ;
-        // decayed_delta = projection[i] - decayed_delta;
-        // cout << decayed_delta << endl;
-        // projection_delta[i] += decayed_delta;
+        // projection_delta[i] += delta;
       }
     }
 
@@ -239,27 +249,38 @@ namespace std {
     //     // projection_delta[i] -= delta;
     //   }
     // }
+    // if(outgoing_chunks.size()!=0){
+    //   if(last_chunk_length==2){
+    //     for (uint32_t i = 0; i < L; i++) {
+    //       int delta = 0;
+    //       for(int j=0;j < outgoing_chunks.size(); j++){
+    //         delta += hashmulti(outgoing_chunks[j], H[i]);
+    //       }
+    //       projection[i] += (1-pow(DECAYED_RATE, (cache.size()-1)-ut))*delta;
+    //     }
+    //   }else{
+    //     for (uint32_t i = 0; i < L; i++) {
+    //       int delta = 0;
+    //       for(int j=0;j < outgoing_chunks.size()-1; j++){
+    //         delta += hashmulti(outgoing_chunks[j], H[i]);
+    //       }
+    //       projection[i] += (1-pow(DECAYED_RATE, (cache.size()-1)-ut))*delta;
+    //       projection[i] -= hashmulti(outgoing_chunks[outgoing_chunks.size()-1], H[i])
+    //       *pow(DECAYED_RATE, (cache.size()-1)-ut);
+    //     }
+    //   }
+    //
+    // }
     if(outgoing_chunks.size()!=0){
-      if(last_chunk_length==2){
-        for (uint32_t i = 0; i < L; i++) {
-          int delta = 0;
-          for(int j=0;j < outgoing_chunks.size(); j++){
-            delta += hashmulti(outgoing_chunks[j], H[i]);
-          }
-          projection[i] += (1-pow(DECAYED_RATE, (cache.size()-1)-ut))*delta;
+      for (uint32_t i = 0; i < L; i++) {
+        // decayed_delta=projection[i];
+        double delta = 0;
+        for(int j=0;j < outgoing_chunks.size(); j++){
+          delta += hashmulti(outgoing_chunks[j], H[i]);
         }
-      }else{
-        for (uint32_t i = 0; i < L; i++) {
-          int delta = 0;
-          for(int j=0;j < outgoing_chunks.size()-1; j++){
-            delta += hashmulti(outgoing_chunks[j], H[i]);
-          }
-          projection[i] += (1-pow(DECAYED_RATE, (cache.size()-1)-ut))*delta;
-          projection[i] -= hashmulti(outgoing_chunks[outgoing_chunks.size()-1], H[i])
-          *pow(DECAYED_RATE, (cache.size()-1)-ut);
-        }
+        // projection_delta[i] -= delta * pow(DECAYED_RATE, (cache.size()-1)-ut);
+        projection[i] -= delta * pow(DECAYED_RATE, (cache.size()-1)-ut);
       }
-
     }
 
 

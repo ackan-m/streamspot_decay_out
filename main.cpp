@@ -198,7 +198,7 @@ int main(int argc, char *argv[]) {
     }
     if (train_gids.find(i) == train_gids.end()) {
       // テストを特定のグラフにする
-      if(i == 26){
+      if(i == 17){
         test_gids.push_back(i);
       }
       // test_gids.push_back(i);
@@ -255,11 +255,21 @@ int main(int argc, char *argv[]) {
   for (auto& e : train_edges) {
     if(graph_cache_number!= get<5>(e)){
       cache.clear();
-      // cout << cache.size() << endl;
+      cout << "cache clear" <<endl;
+      cout << "cache size:" << cache.size() << endl;
+      cout << "cache top:" <<
+      get<0>(cache[0]) << " "<< get<1>(cache[0])<< " "<<
+      get<2>(cache[0]) << " "<< get<3>(cache[0]) << " " <<
+      get<4>(cache[0]) << " " << get<5>(cache[0]) << endl;
       graph_cache_number=get<5>(e);
     }
     update_graphs(e, graphs);
     cache.push_back(e);
+    // for(auto& gid: train_gids){
+    //   for(uint32_t i = 0; i < L; i++){
+    //     streamhash_projections[gid][i] *= DECAYED_RATE;
+    //   }
+    // }
     decayed_trained_streamhash_projection(e, graphs, streamhash_sketches,
                                streamhash_projections, chunk_length, H, cache);
   }
@@ -287,6 +297,16 @@ int main(int argc, char *argv[]) {
 
   }
 
+  cout << "Constructing StreamHash projections for training graphs:" << endl;
+  for (auto& gid : train_gids) {
+    cout << "#" <<gid << endl;
+    cout << "[";
+    for (int i = 0 ; i < L-1 ; i++){
+      cout << streamhash_projections[gid][i] << ",";
+    } cout << streamhash_projections[gid][L-1] << "]" <<endl;
+
+  }
+
 #ifdef DEBUG
   // StreamHash similarity has been verified to be accurate for C=50
   for (auto& gid1 : train_gids) {
@@ -311,7 +331,7 @@ int main(int argc, char *argv[]) {
   double ave[4] = {0};
   double th[4]={0};
 
-  int medoid[] = {11,14};
+  int medoid[] = {14,12};
   for (int i = 0; i < int(nclusters); i++) {
     cout << "cluster" << i << endl;
     for (auto& gid : clusters[i]) {
@@ -326,33 +346,6 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-
-  // for(auto& gid1:train_gids){
-  //   for(auto& gid2:train_gids){
-  //     if(gid1==10){
-  //       if(gid2==7||gid2==11||gid2==12||gid2==6||gid2==14||gid2==15){
-  //         score = 1-cos(PI*(1.0 - streamhash_similarity(streamhash_sketches[gid1],
-  //                                                     streamhash_sketches[gid2])));
-  //         sum[0] += score;
-  //         nijou[0] += score*score;
-  //         sum[3] += score;
-  //         nijou[3] += score*score;
-  //         cout << score << endl;
-  //       }
-  //     }else if(gid1==16){
-  //       if(gid2==8||gid2==9||gid2==13/*||gid2==12||gid2==12||gid2==6||gid2==15||gid2==3*/){
-  //         score = 1-cos(PI*(1.0 - streamhash_similarity(streamhash_sketches[gid1],
-  //                                                     streamhash_sketches[gid2])));
-  //         sum[1] += score;
-  //         nijou[1] += score*score;
-  //         sum[3] += score;
-  //         nijou[3] += score*score;
-  //         cout << score << endl;
-  //       }
-  //     }
-  //   }
-  // }
-  ///*
 
   cout << cluster_sizes[0] << " " << cluster_sizes[1] << endl;
   ave[0] = sum[0]/(cluster_sizes[0]-1); ave[1] = sum[1]/(cluster_sizes[1]-1); //ave[2] = sum[2]/3;
@@ -469,7 +462,6 @@ int main(int argc, char *argv[]) {
 
       auto& e = test_edges[gid][off];
 
-
       //
       // PROCESS EDGE
       //
@@ -541,6 +533,16 @@ int main(int argc, char *argv[]) {
       end = chrono::steady_clock::now();
       diff = chrono::duration_cast<chrono::nanoseconds>(end - start);
       cluster_update_times[edge_num] = diff;
+      // cout << "centroid projection:" << endl;
+      // for(uint32_t j = 0 ; j < 2 ; j++){
+        // cout << "cluster:" << j << endl;
+        for(uint32_t i = 0; i < L; i++){
+          cout << centroid_projections[1][i] << " ";
+        }cout << endl;
+        // for(uint32_t i = 0; i < 10; i++){
+        //   cout << projection_delta[i] << " ";
+        // }cout << endl;
+      // }
 
       // store current anomaly scores and cluster assignments
       if (edge_num % CLUSTER_UPDATE_INTERVAL == 0 ||
@@ -627,8 +629,16 @@ int main(int argc, char *argv[]) {
   }
   cout << endl;
 
-  cout << "Iterations " << num_intervals << endl;
-  for (uint32_t i = 0; i < num_intervals; i++) {
+
+  int size2 = 0;
+  for(auto& kv : graphs[test_gids[0]]){
+    size2 += kv.second.size();
+  }size2 = ceil(double(size2) / CLUSTER_UPDATE_INTERVAL);
+
+  // cout << "Iterations " << num_intervals << endl;
+  // for (uint32_t i = 0; i < num_intervals; i++) {
+  cout << "Iterations " << size2 << endl;
+  for (uint32_t i = 0; i < size2; i++) {
     auto& a = anomaly_score_iterations[i];
     auto& c = cluster_map_iterations[i];
     for (uint32_t j = 0; j < a.size(); j++) {
