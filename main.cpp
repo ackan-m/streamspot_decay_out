@@ -255,12 +255,12 @@ int main(int argc, char *argv[]) {
   for (auto& e : train_edges) {
     if(graph_cache_number!= get<5>(e)){
       cache.clear();
-      cout << "cache clear" <<endl;
-      cout << "cache size:" << cache.size() << endl;
-      cout << "cache top:" <<
-      get<0>(cache[0]) << " "<< get<1>(cache[0])<< " "<<
-      get<2>(cache[0]) << " "<< get<3>(cache[0]) << " " <<
-      get<4>(cache[0]) << " " << get<5>(cache[0]) << endl;
+      // cout << "cache clear" <<endl;
+      // cout << "cache size:" << cache.size() << endl;
+      // cout << "cache top:" <<
+      // get<0>(cache[0]) << " "<< get<1>(cache[0])<< " "<<
+      // get<2>(cache[0]) << " "<< get<3>(cache[0]) << " " <<
+      // get<4>(cache[0]) << " " << get<5>(cache[0]) << endl;
       graph_cache_number=get<5>(e);
     }
     update_graphs(e, graphs);
@@ -289,11 +289,11 @@ int main(int argc, char *argv[]) {
       }
     //クラスタ作るようにスケッチを出力
 
-    // cout << "#" <<gid << endl;
-    // cout << "[";
-    // for (int i = 0 ; i < L-1 ; i++){
-    //   cout << streamhash_sketches[gid][i] << ",";
-    // } cout << streamhash_sketches[gid][L-1] << "]" <<endl;
+    cout << "#" <<gid << endl;
+    cout << "[";
+    for (int i = 0 ; i < L-1 ; i++){
+      cout << streamhash_sketches[gid][i] << ",";
+    } cout << streamhash_sketches[gid][L-1] << "]" <<endl;
 
   }
 
@@ -533,16 +533,6 @@ int main(int argc, char *argv[]) {
       end = chrono::steady_clock::now();
       diff = chrono::duration_cast<chrono::nanoseconds>(end - start);
       cluster_update_times[edge_num] = diff;
-      // cout << "centroid projection:" << endl;
-      // for(uint32_t j = 0 ; j < 2 ; j++){
-        // cout << "cluster:" << j << endl;
-        for(uint32_t i = 0; i < L; i++){
-          cout << centroid_projections[1][i] << " ";
-        }cout << endl;
-        // for(uint32_t i = 0; i < 10; i++){
-        //   cout << projection_delta[i] << " ";
-        // }cout << endl;
-      // }
 
       // store current anomaly scores and cluster assignments
       if (edge_num % CLUSTER_UPDATE_INTERVAL == 0 ||

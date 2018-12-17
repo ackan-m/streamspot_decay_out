@@ -504,8 +504,6 @@ vector<string> chunks = get_string_chunks(shingle, chunk_length);
   // }
 
   if(outgoing_chunks.size()!=0){
-    cout << "cache size:" << cache.size() << endl;
-    cout << "ut:" << ut << endl;
     for (uint32_t i = 0; i < L; i++) {
       // decayed_delta=projection[i];
       double delta = 0;
