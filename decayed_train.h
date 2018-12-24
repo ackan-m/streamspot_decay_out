@@ -17,6 +17,8 @@ namespace std{
                               vector<vector<double>>& streamhash_projections,
                              uint32_t chunk_length,
                              const vector<vector<uint64_t>>& H,
-                             deque<edge> cache
+                             deque<edge> cache,
+                             unordered_map<int, unordered_map<string, double>>& hist
+
                            );
 }

@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <vector>
 #include <string>
+#include <map>
 
 #include "decayed_train.h"
 
@@ -28,18 +29,14 @@ namespace std {
                              vector<vector<double>>& streamhash_projections,
                             uint32_t chunk_length,
                             const vector<vector<uint64_t>>& H,
-                            deque<edge> cache
+                            deque<edge> cache,
+                            unordered_map<int, unordered_map<string, double>>& hist
+
                             ){
     // source node = (src_id, src_type)
     // dst_node = (dst_id, dst_type)
     // shingle substring = (src_type, e_type, dst_type)
     //assert(K == 1 && chunk_length >= 4);
-
-    // for timing
-    // chrono::time_point<chrono::steady_clock> start;
-    // chrono::time_point<chrono::steady_clock> end;
-    // chrono::microseconds shingle_construction_time;
-    // chrono::microseconds sketch_update_time;
 
     auto& src_id = get<F_S>(e);
     auto& src_type = get<F_STYPE>(e);
@@ -49,7 +46,6 @@ namespace std {
     auto& projection = streamhash_projections[gid];
     auto& g = graphs[gid];
 
-    // start = chrono::steady_clock::now(); // start shingle construction
 
     // construct the last chunk
     auto& outgoing_edges = g.at(make_pair(src_id, src_type));
@@ -135,10 +131,7 @@ namespace std {
       shingle.push_back(get<1>(outgoing_edges[i]));
     }
     vector<string> chunks = get_string_chunks(shingle, chunk_length);
-    // cout << "print chunks:" << endl;
-    // for(auto& aaa:chunks){
-    //   cout << aaa << endl;
-    // }
+
     vector<string> incoming_chunks; // to be hashed and added
     vector<string> outgoing_chunks; // to be hashed and subtracted
 
@@ -186,15 +179,9 @@ namespace std {
         if(get<4>(E)!=get<4>(last_edge)){
           continue;
         }
-        // cout << "あったぞ" << endl;
-        // cout << ut << "番目"<< endl;
         break;
       }
     }
-
-    // end = chrono::steady_clock::now(); // end shingle construction
-    // shingle_construction_time =
-      // chrono::duration_cast<chrono::microseconds>(end - start);
 
   #ifdef DEBUG
     cout << "Incoming chunks: ";
@@ -210,13 +197,26 @@ namespace std {
     cout << endl;
   #endif
 
+  for(auto itr = hist[gid].begin(); itr != hist[gid].end(); ++itr) {
+    // cout <<   itr->second << " ";
+    itr->second *= DECAYED_RATE;
+    // cout << itr->second << endl;
+  }
+
+  for (auto& chunk : incoming_chunks) {
+    hist[gid][chunk] += 1;
+    // hist[chunk][gid] += 1;
+  }
+  for (auto& chunk : outgoing_chunks) {
+    hist[gid][chunk] -= 1*pow(DECAYED_RATE, (cache.size()-1)-ut);
+    // hist[chunk][gid] -= 1*pow(DECAYED_RATE, (cache.size()-1)-ut);
+  }
+
     // record the change in the projection vector
     // this is used to update the centroid
     // vector<int> projection_delta(L, 0);
     // vector<double> projection_delta(L, 0);
     // double decayed_delta;
-
-    // start = chrono::steady_clock::now(); // start sketch update
 
     // update the projection vectors
     // for (auto& chunk : incoming_chunks) {

@@ -17,6 +17,7 @@
 #include <unordered_set>
 #include <vector>
 #include <sstream>
+#include <map>
 
 #include "cluster.h"
 #include "docopt.h"
@@ -250,31 +251,30 @@ int main(int argc, char *argv[]) {
   }
   deque<edge> cache;
   uint32_t graph_cache_number=0;
+  unordered_map<int, unordered_map<string, double>> hist;//ヒストグラム保持
+  // map<string, vector<double>> hist(27);
+
   // construct bootstrap graphs offline
   cout << "Constructing " << train_gids.size() << " training graphs:" << endl;
   for (auto& e : train_edges) {
     if(graph_cache_number!= get<5>(e)){
       cache.clear();
-      // cout << "cache clear" <<endl;
-      // cout << "cache size:" << cache.size() << endl;
-      // cout << "cache top:" <<
-      // get<0>(cache[0]) << " "<< get<1>(cache[0])<< " "<<
-      // get<2>(cache[0]) << " "<< get<3>(cache[0]) << " " <<
-      // get<4>(cache[0]) << " " << get<5>(cache[0]) << endl;
       graph_cache_number=get<5>(e);
     }
     update_graphs(e, graphs);
     cache.push_back(e);
-    // for(auto& gid: train_gids){
-    //   for(uint32_t i = 0; i < L; i++){
-    //     streamhash_projections[gid][i] *= DECAYED_RATE;
-    //   }
-    // }
     decayed_trained_streamhash_projection(e, graphs, streamhash_sketches,
-                               streamhash_projections, chunk_length, H, cache);
+                               streamhash_projections, chunk_length,
+                               H, cache, hist);
   }
   cache.clear();
-
+  for(int i=0; i<17; i++){
+    cout <<"gid " << i << endl;
+    for(auto itr = hist[i].begin(); itr != hist[i].end(); ++itr) {
+          cout << "key = " << itr->first           // キーを表示
+                          << ", val = " << itr->second << "\n";    // 値を表示
+    }cout << endl << endl;
+  }
 
   // construct StreamHash sketches for bootstrap graphs offline
   cout << "Constructing StreamHash sketches for training graphs:" << endl;
@@ -287,14 +287,16 @@ int main(int argc, char *argv[]) {
       for (uint32_t i = 0; i < L; i++) {
         streamhash_sketches[gid][i] = streamhash_projections[gid][i] >= 0 ? 1 : 0;
       }
-    //クラスタ作るようにスケッチを出力
 
+  }
+
+  //クラスタ作るようにスケッチを出力
+  for(int gid=0; gid<17; gid++){
     cout << "#" <<gid << endl;
     cout << "[";
     for (int i = 0 ; i < L-1 ; i++){
       cout << streamhash_sketches[gid][i] << ",";
-    } cout << streamhash_sketches[gid][L-1] << "]" <<endl;
-
+    } cout << streamhash_sketches[gid][L-1] << "]," <<endl;
   }
 
   cout << "Constructing StreamHash projections for training graphs:" << endl;
@@ -331,7 +333,7 @@ int main(int argc, char *argv[]) {
   double ave[4] = {0};
   double th[4]={0};
 
-  int medoid[] = {14,12};
+  int medoid[] = {9,11};
   for (int i = 0; i < int(nclusters); i++) {
     cout << "cluster" << i << endl;
     for (auto& gid : clusters[i]) {
